@@ -5,6 +5,10 @@ FROM golang:1.26-alpine AS base
 ARG DISTRO_REPO=https://github.com/cruxstack/octo-sts-distros.git
 ARG DISTRO_VERSION=latest
 
+# Allow Go to auto-download the toolchain version requested by the distros'
+# go.mod (e.g. a newer patch release than the base image ships).
+ENV GOTOOLCHAIN=auto
+
 WORKDIR /build
 
 RUN apk add --no-cache git make zip ca-certificates
