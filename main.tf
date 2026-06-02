@@ -34,13 +34,16 @@ locals {
   ssm_arn_prefix = "arn:${local.aws_partition}:ssm:${local.aws_region_name}:${local.aws_account_id}:parameter${var.installer_config.ssm_parameter_prefix}"
 
   lambda_env_common = {
+    PORT                   = "8080"
+    METRICS                = "false"
     LOG_LEVEL              = var.lambda_config.log_level
     GITHUB_APP_ID          = var.installer_config.enabled ? "${local.ssm_arn_prefix}GITHUB_APP_ID" : var.github_app_config.app_id
     GITHUB_APP_PRIVATE_KEY = var.installer_config.enabled ? "${local.ssm_arn_prefix}GITHUB_APP_PRIVATE_KEY" : var.github_app_config.private_key
   }
 
   lambda_env_sts = merge(local.lambda_env_common, {
-    STS_DOMAIN = local.sts_domain
+    STS_DOMAIN                   = local.sts_domain
+    GITHUB_APP_INSTALLER_ENABLED = tostring(var.installer_config.enabled)
   }, var.lambda_environment_variables)
 
   lambda_env_webhook = merge(local.lambda_env_common, {
