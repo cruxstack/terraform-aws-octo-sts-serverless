@@ -33,11 +33,19 @@ locals {
 
   ssm_arn_prefix = "arn:${local.aws_partition}:ssm:${local.aws_region_name}:${local.aws_account_id}:parameter${var.installer_config.ssm_parameter_prefix}"
 
+  # GitHub App ID value (a literal ID, or an SSM ARN when the installer manages
+  # credentials). Emitted as both GITHUB_APP_ID and GITHUB_APP_IDS to support the
+  # upstream octo-sts/app env contract across versions: <= v0.5.4 reads the
+  # singular GITHUB_APP_ID, while >= v0.7.x (current Chainguard package) requires
+  # the plural GITHUB_APP_IDS.
+  github_app_id = var.installer_config.enabled ? "${local.ssm_arn_prefix}GITHUB_APP_ID" : var.github_app_config.app_id
+
   lambda_env_common = {
     PORT                   = "8080"
     METRICS                = "false"
     LOG_LEVEL              = var.lambda_config.log_level
-    GITHUB_APP_ID          = var.installer_config.enabled ? "${local.ssm_arn_prefix}GITHUB_APP_ID" : var.github_app_config.app_id
+    GITHUB_APP_ID          = local.github_app_id
+    GITHUB_APP_IDS         = local.github_app_id
     GITHUB_APP_PRIVATE_KEY = var.installer_config.enabled ? "${local.ssm_arn_prefix}GITHUB_APP_PRIVATE_KEY" : var.github_app_config.private_key
   }
 
