@@ -55,6 +55,9 @@ jobs:
           level: warning
           fail_level: error
 
+      - name: Test Terraform
+        run: terraform test
+
       # - name: Lint Terraform
       #   uses: reviewdog/action-tflint@c332ae72f14fd853c08323a60383b396cc34715a # v1.28.0
       #   with:

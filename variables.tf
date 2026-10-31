@@ -73,7 +73,7 @@ variable "lambda_environment_variables" {
 # ------------------------------------------------------------------- github ---
 
 variable "github_app_config" {
-  description = "GitHub App configuration. Private key and webhook secret values can be SSM ARNs for automatic resolution at runtime. When installer_config.enabled is true, these can be empty as credentials will be stored in SSM by the setup wizard."
+  description = "GitHub App configuration. Private key and webhook secret values can be SSM ARNs for automatic resolution at runtime. When installer_config.enabled is true, or it is false with ssm_parameter_prefix set, these can be empty as credentials are read from the prefix."
   sensitive   = true
   type = object({
     app_id         = optional(string, "")
@@ -132,8 +132,9 @@ variable "installer_config" {
     - / redirects to /setup until the GitHub App is configured
     - Credentials are automatically saved to SSM Parameter Store
 
-    After setup is complete, you can disable the installer by setting enabled=false
-    and redeploying, or by clicking "Disable Installer" in the success page.
+    After setup is complete, disable the installer by setting enabled=false and
+    redeploying. Credentials keep loading from ssm_parameter_prefix unless
+    github_app_config.app_id is set.
   EOT
   type = object({
     enabled              = optional(bool, false)                  # Enable the setup wizard
