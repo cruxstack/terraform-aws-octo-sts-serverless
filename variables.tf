@@ -88,7 +88,11 @@ variable "github_app_config" {
 variable "sts_config" {
   description = "STS service configuration."
   type = object({
-    domain = optional(string, "") # Custom domain for audience validation. If empty, uses API Gateway endpoint hostname.
+    domain          = optional(string, "")       # Custom domain for audience validation. If empty, uses API Gateway endpoint hostname.
+    org_policy_repo = optional(string, "")       # Repository holding org-scoped trust policies. If empty, uses `.github`.
+    policy_dir      = optional(string, "")       # Directory holding trust policies. If empty, uses `.github/chainguard`.
+    allowed_issuers = optional(list(string), []) # OIDC issuers allowed to exchange tokens. If empty, any issuer a policy names.
+    require_app_pin = optional(bool, false)      # Refuse trust policies that do not pin this app with `app` or `app_pattern`.
   })
   default = {}
 }

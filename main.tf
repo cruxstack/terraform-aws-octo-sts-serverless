@@ -49,12 +49,20 @@ locals {
     GITHUB_APP_PRIVATE_KEY = var.installer_config.enabled ? "${local.ssm_arn_prefix}GITHUB_APP_PRIVATE_KEY" : var.github_app_config.private_key
   }
 
-  lambda_env_sts = merge(local.lambda_env_common, {
+  lambda_env_policy = { for k, v in {
+    ORG_POLICY_REPO    = var.sts_config.org_policy_repo
+    OCTOSTS_POLICY_DIR = var.sts_config.policy_dir
+  } : k => v if v != "" }
+
+  lambda_env_sts = merge(local.lambda_env_common, local.lambda_env_policy, { for k, v in {
+    OCTOSTS_ALLOWED_ISSUERS = join(",", var.sts_config.allowed_issuers)
+    OCTOSTS_REQUIRE_APP_PIN = var.sts_config.require_app_pin ? "true" : ""
+    } : k => v if v != "" }, {
     STS_DOMAIN                   = local.sts_domain
     GITHUB_APP_INSTALLER_ENABLED = tostring(var.installer_config.enabled)
   }, var.lambda_environment_variables)
 
-  lambda_env_webhook = merge(local.lambda_env_common, {
+  lambda_env_webhook = merge(local.lambda_env_common, local.lambda_env_policy, {
     AWS_SSM_KMS_KEY_ID                 = var.installer_config.kms_key_id
     AWS_SSM_PARAMETER_PREFIX           = var.installer_config.ssm_parameter_prefix
     GITHUB_APP_INSTALLER_ENABLED       = tostring(var.installer_config.enabled)
