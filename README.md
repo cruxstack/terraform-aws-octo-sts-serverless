@@ -183,7 +183,11 @@ credentials will be created via the setup wizard and stored in SSM.
 
 ```hcl
 sts_config = {
-  domain = string  # Custom domain for audience validation (optional). If empty, uses API Gateway endpoint hostname
+  domain          = string        # Custom domain for audience validation (optional). If empty, uses API Gateway endpoint hostname
+  org_policy_repo = string        # Repository holding org-scoped trust policies (optional). If empty, uses `.github`
+  policy_dir      = string        # Directory holding trust policies (optional). If empty, uses `.github/chainguard`
+  allowed_issuers = list(string)  # OIDC issuers allowed to exchange tokens (optional). If empty, any issuer a policy names
+  require_app_pin = bool          # Refuse policies that don't pin this app with `app` or `app_pattern` (default: false)
 }
 ```
 
