@@ -220,17 +220,16 @@ When the installer is enabled:
 - `/` redirects to `/setup` until the GitHub App is configured
 - Credentials are automatically saved to SSM Parameter Store
 
-**Disabling the installer:** After setup is complete, you can disable the
-installer in two ways:
+**Disabling the installer:** After setup is complete, set
+`installer_config.enabled = false` and redeploy, keeping `ssm_parameter_prefix`
+set. This removes the `/setup` and `/callback` routes and the SSM write
+permission, and the Lambdas keep reading the stored credentials from the prefix
+(unless `github_app_config.app_id` is set).
 
-1. **Via the UI** - Click "Disable Installer" on the success page. This sets
-   `GITHUB_APP_INSTALLER_ENABLED=false` in SSM, which immediately hides the
-   setup UI. The API Gateway routes remain but return 404. This does not cause
-   Terraform drift since routes are still managed by Terraform.
-
-2. **Via Terraform** - Set `installer_config.enabled = false` and redeploy. This
-   removes the installer routes from API Gateway and the SSM write IAM
-   permissions.
+The success page's "Disable Installer" button only sets
+`GITHUB_APP_INSTALLER_ENABLED=false` in SSM, which stops `/` from redirecting to
+`/setup`. `/callback` stays reachable and still saves the credentials for any
+app-manifest code it receives, so prefer the Terraform setting.
 
 ### Lambda Config
 

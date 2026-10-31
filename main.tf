@@ -20,7 +20,9 @@ locals {
   aws_region_name = data.aws_region.current.region
   aws_partition   = data.aws_partition.current.partition
 
-  github_webhook_secret = var.installer_config.enabled ? (
+  ssm_credentials = var.installer_config.enabled || (var.installer_config.ssm_parameter_prefix != "" && var.github_app_config.app_id == "")
+
+  github_webhook_secret = local.ssm_credentials ? (
     "${local.ssm_arn_prefix}GITHUB_WEBHOOK_SECRET"
     ) : (
     var.github_app_config.webhook_secret != "" ? var.github_app_config.webhook_secret : random_password.webhook_secret[0].result
@@ -38,7 +40,7 @@ locals {
   # upstream octo-sts/app env contract across versions: <= v0.5.4 reads the
   # singular GITHUB_APP_ID, while >= v0.7.x (current Chainguard package) requires
   # the plural GITHUB_APP_IDS.
-  github_app_id = var.installer_config.enabled ? "${local.ssm_arn_prefix}GITHUB_APP_ID" : var.github_app_config.app_id
+  github_app_id = local.ssm_credentials ? "${local.ssm_arn_prefix}GITHUB_APP_ID" : var.github_app_config.app_id
 
   lambda_env_common = {
     PORT                   = "8080"
@@ -46,7 +48,7 @@ locals {
     LOG_LEVEL              = var.lambda_config.log_level
     GITHUB_APP_ID          = local.github_app_id
     GITHUB_APP_IDS         = local.github_app_id
-    GITHUB_APP_PRIVATE_KEY = var.installer_config.enabled ? "${local.ssm_arn_prefix}GITHUB_APP_PRIVATE_KEY" : var.github_app_config.private_key
+    GITHUB_APP_PRIVATE_KEY = local.ssm_credentials ? "${local.ssm_arn_prefix}GITHUB_APP_PRIVATE_KEY" : var.github_app_config.private_key
   }
 
   lambda_env_policy = { for k, v in {
@@ -79,7 +81,7 @@ data "aws_region" "current" {}
 data "aws_partition" "current" {}
 
 resource "random_password" "webhook_secret" {
-  count = local.enabled && !var.installer_config.enabled && var.github_app_config.webhook_secret == "" ? 1 : 0
+  count = local.enabled && !local.ssm_credentials && var.github_app_config.webhook_secret == "" ? 1 : 0
 
   length  = 32
   special = false
@@ -421,7 +423,7 @@ data "aws_iam_policy_document" "lambda" {
   }
 
   dynamic "statement" {
-    for_each = var.installer_config.enabled && var.installer_config.ssm_parameter_prefix != "" ? [1] : []
+    for_each = local.ssm_credentials && var.installer_config.ssm_parameter_prefix != "" ? [1] : []
 
     content {
       sid    = "SSMParameterInstallerReadAccess"
